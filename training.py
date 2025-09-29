@@ -527,7 +527,22 @@ class StudentDistiller(BaseTrainer):
                 gamma=distill_config.get('gamma', 0.1)
             ).to(self.device)  # AGGIUNGI .to(self.device)
             self.alpha = distill_config.get('alpha', 0.7)
+
+
+        elif self.distiller_type == 'norm':
+            from distiller_zoo.normkd import NormDistiller
             
+            student_dim = self.student_model.config.d_model
+            teacher_dim = self.teacher_model.config.d_model
+            
+            self.distiller = NormDistiller(
+                student_dim=student_dim,
+                teacher_dim=teacher_dim,
+                T=distill_config.get('temperature', 3.0),
+                gamma=distill_config.get('gamma', 0.1)
+            ).to(self.device)
+            self.alpha = distill_config.get('alpha', 0.7)
+                    
         else:
             raise ValueError(f"Distiller type non supportato: {self.distiller_type}")
         
@@ -622,6 +637,23 @@ class StudentDistiller(BaseTrainer):
                     teacher_logits_flat,
                     student_attn,
                     teacher_attn
+                )
+
+            elif self.distiller_type == 'norm':
+                # Estrai hidden states dell'encoder
+                student_hidden = student_outputs.encoder_hidden_states[-1]
+                teacher_hidden = teacher_outputs.encoder_hidden_states[-1]
+                
+                # Maschera encoder
+                encoder_mask = batch['attention_mask'].bool()
+                student_hidden_flat = student_hidden[encoder_mask]
+                teacher_hidden_flat = teacher_hidden[encoder_mask]
+                
+                kd_loss = self.distiller(
+                    student_logits_flat,
+                    teacher_logits_flat,
+                    student_hidden_flat,
+                    teacher_hidden_flat
                 )
             
             # Loss totale
