@@ -1,0 +1,108 @@
+{
+  "timestamp": "2025-09-29T13:22:16.309016",
+  "models": {
+    "teacher_path": "/home/delta-core/Scrivania/T5Distillation_new/checkpoints/teacher/checkpoint_epoch_5.pt",
+    "student_path": "/home/delta-core/Scrivania/T5Distillation_new/checkpoints/student/t5_small.pt"
+  },
+  "teacher_results": {
+    "loss": 2.275277727127075,
+    "generation_time_per_sample": 0.3808849799633026,
+    "rouge": {
+      "rouge_1": 0.3360293666989868,
+      "rouge_2": 0.13446797074149874,
+      "rouge_l": 0.24532574238138988
+    },
+    "bleu": {
+      "bleu_1": 0.31004696596519943,
+      "bleu_2": 0.17835597233628303,
+      "bleu_3": 0.11791585782794656,
+      "bleu_4": 0.08512933311245166,
+      "corpus_bleu": 0.11317192990809674
+    },
+    "exact_match": 0.0,
+    "f1_score": 0.31319034923383016,
+    "num_parameters": 737668096,
+    "num_samples_evaluated": 1000
+  },
+  "student_results": {
+    "loss": 2.4191607580184935,
+    "generation_time_per_sample": 0.05218632078170776,
+    "rouge": {
+      "rouge_1": 0.3223668973465224,
+      "rouge_2": 0.1281648441050921,
+      "rouge_l": 0.23762801636777783
+    },
+    "bleu": {
+      "bleu_1": 0.30085109978508523,
+      "bleu_2": 0.1707756232462728,
+      "bleu_3": 0.11254707983960129,
+      "bleu_4": 0.08197048949019359,
+      "corpus_bleu": 0.10977313679855352
+    },
+    "exact_match": 0.001,
+    "f1_score": 0.3014680089919577,
+    "num_parameters": 60506624,
+    "num_samples_evaluated": 1000
+  },
+  "speed_comparison": {
+    "teacher": {
+      "mean_time": 0.17826308424656206,
+      "std_time": 0.016790485745946635,
+      "min_time": 0.15527915954589844,
+      "max_time": 0.2036149501800537,
+      "median_time": 0.17231887578964233,
+      "samples_per_second": 5.6096864038146235
+    },
+    "student": {
+      "mean_time": 0.03739282947320204,
+      "std_time": 0.005717518712958545,
+      "min_time": 0.030610382556915283,
+      "max_time": 0.04741814732551575,
+      "median_time": 0.03676465153694153,
+      "samples_per_second": 26.74309524281013
+    },
+    "speedup": 4.767306640282896,
+    "relative_throughput": 4.767306640282896
+  },
+  "memory_analysis": {
+    "teacher": {
+      "param_size_mb": 2813.98046875,
+      "buffer_size_mb": 0.0,
+      "total_size_mb": 2813.98046875
+    },
+    "student": {
+      "param_size_mb": 230.814453125,
+      "buffer_size_mb": 0.0,
+      "total_size_mb": 230.814453125
+    },
+    "compression_ratio": 12.191526269917158
+  },
+  "tradeoff_analysis": {
+    "performance_degradation": {
+      "rouge": {
+        "rouge_1": 4.0658557573937175,
+        "rouge_2": 4.687455757418824,
+        "rouge_l": 3.13775714643307
+      },
+      "bleu": {
+        "bleu_1": 2.965959093160863,
+        "bleu_2": 4.250123497809084,
+        "bleu_3": 4.5530585005614475,
+        "bleu_4": 3.7106406296938754,
+        "corpus_bleu": 3.0032121147914226
+      }
+    },
+    "efficiency_gains": {
+      "parameter_reduction_percent": 91.79758155082254,
+      "speedup_factor": 7.298559742437517,
+      "memory_reduction_factor": 12.191526269917158
+    },
+    "overall_efficiency_score": 221.52862453712282,
+    "performance_retention_percent": 96.03631044625146
+  },
+  "compression_ratio": {
+    "parameters": 12.191526269917158,
+    "memory": 12.191526269917158,
+    "inference_speedup": 4.767306640282896
+  }
+}

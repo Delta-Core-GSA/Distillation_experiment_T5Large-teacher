@@ -1,0 +1,121 @@
+{
+  "model": {
+    "name": "google-t5/t5-small",
+    "type": "student",
+    "cache_dir": "./model_cache"
+  },
+  
+  "dataset": {
+    "name": "cnn_dailymail",
+    "version": "3.0.0",
+    "cache_dir": "./data",
+    "max_length": 512,
+    "max_target_length": 150,
+    "max_train_samples": null,
+    "max_val_samples": 1000,
+    "prefix": "summarize: "
+  },
+  
+  "distillation": {
+    "teacher_model_path": "/home/delta-core/Scrivania/T5Distillation_new/checkpoints/teacher/checkpoint_epoch_5.pt",
+    "teacher_model_name": "google-t5/t5-large", 
+    "distillation_type": "feature",
+    "temperature": 5.0,
+    "alpha": 0.5,
+    "beta": 0.1, 
+    "gamma": 0.0, 
+    "hard_label_weight": 0.3,
+    "soft_label_weight": 0.7,
+    "feature_matching": false,
+    "attention_matching": false,
+    "intermediate_matches": []
+  },
+  
+  "training": {
+    "num_epochs": 5,
+    "batch_size": 8,
+    "eval_batch_size": 8,
+    "learning_rate": 5e-4,
+    "weight_decay": 0.01,
+    "adam_epsilon": 1e-8,
+    "warmup_ratio": 0.1,
+    "max_grad_norm": 1.0,
+    "gradient_accumulation_steps": 2,
+    "fp16": false,
+    "log_interval": 50,
+    "eval_interval": 500,
+    "save_interval": 1000,
+    "early_stopping_patience": 5,
+    "early_stopping_metric": "rouge_l",
+    "early_stopping_mode": "max"
+  },
+  
+  "generation": {
+    "max_length": 150,
+    "min_length": 30,
+    "num_beams": 4,
+    "no_repeat_ngram_size": 3,
+    "early_stopping": true,
+    "length_penalty": 1.0,
+    "temperature": 1.0,
+    "top_k": 50,
+    "top_p": 0.95,
+    "do_sample": false
+  },
+  
+  "optimization": {
+    "optimizer_type": "adamw",
+    "scheduler_type": "linear",
+    "warmup_steps": 1000,
+    "gradient_checkpointing": false,
+    "mixed_precision": false
+  },
+  
+  "paths": {
+    "output_dir": "./output/student",
+    "checkpoint_dir": "./checkpoints/student",
+    "log_dir": "./logs/student",
+    "cache_dir": "./cache",
+    "best_model_name": "best_student_model.pt",
+    "final_model_name": "final_student_model"
+  },
+  
+  "monitoring": {
+    "use_wandb": false,
+    "wandb_project": "t5-distillation",
+    "wandb_entity": null,
+    "use_tensorboard": true,
+    "tensorboard_dir": "./runs/student",
+    "log_level": "INFO"
+  },
+  
+  "hardware": {
+    "num_workers": 4,
+    "pin_memory": true,
+    "find_unused_parameters": false,
+    "ddp_backend": "nccl",
+    "gradient_accumulation_steps": 1
+  },
+  
+  "evaluation": {
+    "metrics": ["rouge", "bleu", "bertscore", "perplexity"],
+    "save_predictions": true,
+    "num_prediction_samples": 100,
+    "eval_during_training": true,
+    "compare_with_teacher": true
+  },
+  
+  "reproducibility": {
+    "seed": 42,
+    "deterministic": true,
+    "benchmark": false
+  },
+  
+  "student_specific": {
+    "initialization": "pretrained",
+    "layer_mapping_strategy": "uniform",
+    "hidden_size_ratio": null,
+    "num_layers_ratio": null,
+    "vocab_size": null
+  }
+}
