@@ -22,7 +22,7 @@ def parse_arguments():
     
     # Modalità operative
     parser.add_argument('--mode', type=str, required=True,
-                       choices=['train_teacher', 'distill_student', 'benchmark', 'full_pipeline'],
+                       choices=['train_teacher', 'distill_student', 'benchmark', 'full_pipeline','benchmark_code_carbon'],
                        help='Modalità di esecuzione')
 
     # Percorsi modelli (per benchmark)
@@ -31,6 +31,17 @@ def parse_arguments():
     parser.add_argument('--student_path', type=str, default=None,
                     help='Path al modello student')
     
+
+
+    # Percorsi modelli per benchmark codecarbon
+    parser.add_argument('--teacher_path', type=str, default=None,
+                    help='Path al modello teacher finetuned')
+    parser.add_argument('--student_distilled_path', type=str, default=None,
+                    help='Path al modello student distillato')
+    parser.add_argument('--student_finetuned_path', type=str, default=None,
+                    help='Path al modello student finetuned (baseline)')
+    
+
     # Configurazioni
     parser.add_argument('--teacher_config', type=str, default='configs/teacher_config.json',
                        help='Path al file di configurazione del teacher')
@@ -208,6 +219,33 @@ def run_benchmark(args, teacher_path=None, student_path=None):
     
     return results
 
+def run_benchmark_code_carbon(args):
+    """Esegue benchmark su tutti e 3 i modelli"""
+    logging.info("=" * 50)
+    logging.info("ESEGUENDO BENCHMARK TRIPLO")
+    logging.info("=" * 50)
+    
+    if not args.teacher_path or not args.student_distilled_path or not args.student_finetuned_path:
+        raise ValueError("Per benchmark triplo servono tutti e 3 i path")
+    
+    evaluator = BenchmarkEvaluator(
+        teacher_path=args.teacher_path,
+        student_distilled_path=args.student_distilled_path,
+        student_finetuned_path=args.student_finetuned_path,
+        device=args.device,
+        output_dir=os.path.join(args.output_dir, 'benchmark_code_carbon'),
+        num_workers=args.num_workers,
+        track_energy=True
+    )
+    
+    results = evaluator.run_triple_evaluation()
+    
+    report_path = evaluator.save_report(results)
+    logging.info(f"Report salvato in: {report_path}")
+    evaluator.print_summary(results)
+    
+    return results
+
 
 def run_full_pipeline(args, teacher_config, student_config):
     """Esegue l'intero pipeline: training, distillazione, benchmark"""
@@ -294,7 +332,10 @@ def main():
         elif args.mode == 'benchmark':
             # Path devono essere specificati via CLI
             run_benchmark(args, args.teacher_path, args.student_path)
-        
+                
+        elif args.mode == 'benchmark_code_carbon':
+            run_benchmark_code_carbon(args)
+
         elif args.mode == 'full_pipeline':
             teacher_config = load_config(args.teacher_config)
             student_config = load_config(args.student_config)
