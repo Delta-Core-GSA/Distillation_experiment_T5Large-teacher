@@ -34,7 +34,7 @@ def parse_arguments():
 
 
     # Percorsi modelli per benchmark codecarbon
-    parser.add_argument('--teacher_path', type=str, default=None,
+    parser.add_argument('--teacher_path_benchmark', type=str, default=None,
                     help='Path al modello teacher finetuned')
     parser.add_argument('--student_distilled_path', type=str, default=None,
                     help='Path al modello student distillato')
