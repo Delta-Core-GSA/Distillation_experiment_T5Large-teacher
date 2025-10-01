@@ -1,6 +1,6 @@
 {
   "model": {
-    "name": "google-t5/t5-small",
+    "name": "google/flan-t5-small",
     "type": "student",
     "cache_dir": "./model_cache"
   },
