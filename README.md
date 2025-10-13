@@ -120,5 +120,3 @@ Dataset
 Uses CNN/DailyMail dataset for abstractive summarization. The dataset is automatically downloaded on first run.
 
 
-Citation
-If you use this code, please cite the relevant papers for T5 and knowledge distillation methods used.
