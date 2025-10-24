@@ -1,5 +1,5 @@
 """
-Utilità essenziali per il progetto di distillazione
+Essential utilities for the distillation project
 """
 import os
 import json
@@ -9,18 +9,16 @@ import sys
 from pathlib import Path
 from typing import Dict, Optional
 from datetime import datetime
-
 import torch
 import numpy as np
 import psutil
 
-
 def set_seed(seed: int):
     """
-    Imposta seed per riproducibilità
+    Set seed for reproducibility
     
     Args:
-        seed: Seed da utilizzare
+        seed: Seed to use
     """
     random.seed(seed)
     np.random.seed(seed)
@@ -30,23 +28,22 @@ def set_seed(seed: int):
     torch.backends.cudnn.benchmark = False
     os.environ['PYTHONHASHSEED'] = str(seed)
     
-    logging.info(f"Random seed impostato a: {seed}")
-
+    logging.info(f"Random seed set to: {seed}")
 
 def setup_logging(log_dir: str):
     """
-    Configura il sistema di logging
+    Configure the logging system
     
     Args:
-        log_dir: Directory per i file di log
+        log_dir: Directory for log files
     """
     os.makedirs(log_dir, exist_ok=True)
     
-    # Nome file con timestamp
+    # File name with timestamp
     timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     log_file = os.path.join(log_dir, f'training_{timestamp}.log')
     
-    # Configura logging (hardcoded a INFO)
+    # Configure logging (hardcoded to INFO)
     logging.basicConfig(
         level=logging.INFO,
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -56,50 +53,47 @@ def setup_logging(log_dir: str):
         ]
     )
     
-    logging.info(f"Logging configurato. File: {log_file}")
-
+    logging.info(f"Logging configured. File: {log_file}")
 
 def load_config(config_path: str) -> Dict:
     """
-    Carica configurazione da file JSON
+    Load configuration from JSON file
     
     Args:
-        config_path: Path al file di configurazione
+        config_path: Path to configuration file
     Returns:
-        Dict con la configurazione
+        Dict with configuration
     """
     if not os.path.exists(config_path):
-        raise FileNotFoundError(f"Config file non trovato: {config_path}")
+        raise FileNotFoundError(f"Config file not found: {config_path}")
     
     with open(config_path, 'r') as f:
         config = json.load(f)
     
-    logging.info(f"Configurazione caricata da: {config_path}")
+    logging.info(f"Configuration loaded from: {config_path}")
     return config
-
 
 def save_checkpoint(state: Dict, checkpoint_path: str, 
                    is_best: bool = False,
                    best_path: Optional[str] = None):
     """
-    Salva checkpoint del modello
+    Save model checkpoint
     
     Args:
-        state: State dict da salvare
-        checkpoint_path: Path del checkpoint
-        is_best: Se è il miglior modello finora
-        best_path: Path per salvare il miglior modello
+        state: State dict to save
+        checkpoint_path: Checkpoint path
+        is_best: Whether it's the best model so far
+        best_path: Path to save the best model
     """
     torch.save(state, checkpoint_path)
-    logging.info(f"Checkpoint salvato: {checkpoint_path}")
+    logging.info(f"Checkpoint saved: {checkpoint_path}")
     
     if is_best and best_path:
         torch.save(state, best_path)
-        logging.info(f"Miglior modello aggiornato: {best_path}")
-
+        logging.info(f"Best model updated: {best_path}")
 
 def print_system_info():
-    """Stampa informazioni sul sistema"""
+    """Print system information"""
     logging.info("=" * 50)
     logging.info("SYSTEM INFO")
     logging.info("=" * 50)
@@ -132,9 +126,8 @@ def print_system_info():
     
     logging.info("=" * 50)
 
-
 class AverageMeter:
-    """Calcola e memorizza medie progressive"""
+    """Calculates and stores progressive averages"""
     
     def __init__(self, name: str, fmt: str = ':.4f'):
         self.name = name
@@ -157,9 +150,8 @@ class AverageMeter:
         fmtstr = '{name} {val' + self.fmt + '} ({avg' + self.fmt + '})'
         return fmtstr.format(**self.__dict__)
 
-
 class ProgressMeter:
-    """Mostra progresso del training"""
+    """Shows training progress"""
     
     def __init__(self, num_batches, meters, prefix=""):
         self.batch_fmtstr = self._get_batch_fmtstr(num_batches)
@@ -176,18 +168,17 @@ class ProgressMeter:
         fmt = '{:' + str(num_digits) + 'd}'
         return '[' + fmt + '/' + fmt.format(num_batches) + ']'
 
-
 class EarlyStopping:
-    """Early stopping per training"""
+    """Early stopping for training"""
     
     def __init__(self, patience: int = 7, verbose: bool = False, 
                  delta: float = 0, mode: str = 'max'):
         """
         Args:
-            patience: Epoche senza miglioramento prima di fermarsi
-            verbose: Se stampare messaggi
-            delta: Miglioramento minimo richiesto
-            mode: 'max' o 'min' per massimizzare/minimizzare metrica
+            patience: Epochs without improvement before stopping
+            verbose: Whether to print messages
+            delta: Minimum required improvement
+            mode: 'max' or 'min' to maximize/minimize metric
         """
         self.patience = patience
         self.verbose = verbose
@@ -206,7 +197,7 @@ class EarlyStopping:
         if self.best_score is None:
             self.best_score = score
             if self.verbose:
-                logging.info(f'Validation score inizializzato a {val_score:.4f}')
+                logging.info(f'Validation score initialized to {val_score:.4f}')
         elif score < self.best_score + self.delta:
             self.counter += 1
             if self.verbose:
@@ -217,4 +208,4 @@ class EarlyStopping:
             self.best_score = score
             self.counter = 0
             if self.verbose:
-                logging.info(f'Validation score migliorato a {val_score:.4f}')
+                logging.info(f'Validation score improved to {val_score:.4f}')

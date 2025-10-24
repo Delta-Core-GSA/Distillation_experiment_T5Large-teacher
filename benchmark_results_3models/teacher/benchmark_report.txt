@@ -1,0 +1,7 @@
+================================================================================
+ KNOWLEDGE DISTILLATION BENCHMARK REPORT 
+================================================================================
+
+Timestamp: 2025-10-12T22:19:19.174394
+Model: /home/delta-core/Scrivania/T5Distillation_new/checkpoints/teacher/checkpoint_epoch_5.pt
+

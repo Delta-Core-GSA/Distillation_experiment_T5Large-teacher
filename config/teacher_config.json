@@ -1,6 +1,6 @@
 {
   "model": {
-    "name": "google-t5/t5-large",
+    "name": "google-t5/t5-small",
     "type": "teacher",
     "cache_dir": "/mnt/HDD500/T5Distillation/model_cache"
   },
@@ -18,7 +18,7 @@
   
   "training": {
     "num_epochs": 5,
-    "batch_size": 2,
+    "batch_size": 32,
     "eval_batch_size": 1,
     "learning_rate": 3e-4,
     "weight_decay": 0.01,

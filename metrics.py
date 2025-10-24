@@ -1,5 +1,5 @@
 """
-Metriche di valutazione per text generation
+Evaluation metrics for text generation
 """
 import logging
 from typing import List, Dict
@@ -7,7 +7,7 @@ import numpy as np
 from collections import Counter
 import string
 
-# Import librerie metriche
+# Import metric libraries
 try:
     from rouge_score import rouge_scorer
     ROUGE_AVAILABLE = True
@@ -34,14 +34,14 @@ def compute_generation_metrics(predictions: List[str],
                               references: List[str],
                               metrics: List[str] = None) -> Dict:
     """
-    Calcola metriche per text generation
+    Calculate metrics for text generation
     
     Args:
-        predictions: Testi generati
-        references: Testi di riferimento
-        metrics: Lista metriche da calcolare (default: tutte)
+        predictions: Generated texts
+        references: Reference texts
+        metrics: List of metrics to calculate (default: all)
     Returns:
-        Dict con tutte le metriche
+        Dict with all metrics
     """
     if metrics is None:
         metrics = ['rouge', 'bleu', 'exact_match', 'f1']
@@ -68,13 +68,13 @@ def compute_generation_metrics(predictions: List[str],
 def compute_rouge_scores(predictions: List[str], 
                         references: List[str]) -> Dict:
     """
-    Calcola ROUGE scores (ROUGE-1, ROUGE-2, ROUGE-L)
+    Calculate ROUGE scores (ROUGE-1, ROUGE-2, ROUGE-L)
     
     Args:
-        predictions: Testi generati
-        references: Testi di riferimento
+        predictions: Generated texts
+        references: Reference texts
     Returns:
-        Dict con ROUGE scores
+        Dict with ROUGE scores
     """
     if not ROUGE_AVAILABLE:
         return {}
@@ -100,25 +100,25 @@ def compute_rouge_scores(predictions: List[str],
 def compute_bleu_scores(predictions: List[str], 
                        references: List[str]) -> Dict:
     """
-    Calcola BLEU scores (BLEU-1, BLEU-2, BLEU-3, BLEU-4)
+    Calculate BLEU scores (BLEU-1, BLEU-2, BLEU-3, BLEU-4)
     
     Args:
-        predictions: Testi generati
-        references: Testi di riferimento
+        predictions: Generated texts
+        references: Reference texts
     Returns:
-        Dict con BLEU scores
+        Dict with BLEU scores
     """
     if not BLEU_AVAILABLE:
         return {}
     
-    # Tokenizza
+    # Tokenize
     tokenized_predictions = [word_tokenize(pred.lower()) for pred in predictions]
     tokenized_references = [[word_tokenize(ref.lower())] for ref in references]
     
     smoother = SmoothingFunction()
     bleu_scores = {}
     
-    # Calcola BLEU per n-gram 1-4
+    # Calculate BLEU for n-grams 1-4
     for n in range(1, 5):
         weights = tuple([1/n] * n + [0] * (4-n))
         scores = []
@@ -148,13 +148,13 @@ def compute_bleu_scores(predictions: List[str],
 def compute_exact_match(predictions: List[str],
                        references: List[str]) -> float:
     """
-    Calcola Exact Match accuracy
+    Calculate Exact Match accuracy
     
     Args:
-        predictions: Testi generati
-        references: Testi di riferimento
+        predictions: Generated texts
+        references: Reference texts
     Returns:
-        Percentuale di match esatti
+        Percentage of exact matches
     """
     def normalize_text(text):
         text = text.lower()
@@ -173,13 +173,13 @@ def compute_exact_match(predictions: List[str],
 def compute_f1_score(predictions: List[str],
                     references: List[str]) -> float:
     """
-    Calcola F1 score basato su token overlap
+    Calculate F1 score based on token overlap
     
     Args:
-        predictions: Testi generati
-        references: Testi di riferimento
+        predictions: Generated texts
+        references: Reference texts
     Returns:
-        F1 score medio
+        Average F1 score
     """
     def get_tokens(text):
         text = text.lower()

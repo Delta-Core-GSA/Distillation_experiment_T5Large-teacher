@@ -1,0 +1,42 @@
+{
+  "t5_flan_small_finetuned": {
+    "timestamp": "2025-10-13T14:34:52.008680",
+    "model_type": "student",
+    "model_path": "/mnt/SSD2TB/T5Model/flant5small_finetuned_kaggle/Distillation_experiment_T5Base-teacher-main/checkpoints/teacher/checkpoint_epoch_5.pt",
+    "model_results": {
+      "loss": 1.9712046642303467,
+      "generation_time_per_sample": 0.60136221575737,
+      "rouge": {
+        "rouge_1": 0.32201958311182505,
+        "rouge_2": 0.12521179611525643,
+        "rouge_l": 0.23513128827019203
+      },
+      "bleu": {
+        "bleu_1": 0.298808295595299,
+        "bleu_2": 0.16784703509507254,
+        "bleu_3": 0.10916358383254658,
+        "bleu_4": 0.07888778320136379,
+        "corpus_bleu": 0.10501593714981075
+      },
+      "exact_match": 0.0,
+      "f1_score": 0.2995056554468468,
+      "num_parameters": 76961152,
+      "num_samples_evaluated": 1000
+    },
+    "performance_summary": {
+      "rouge_l": 0.23513128827019203,
+      "bleu_4": 0.07888778320136379,
+      "loss": 1.9712046642303467,
+      "avg_generation_time": 0.7330141305923462,
+      "samples_per_second": 1.36423018092694
+    },
+    "model_info": {
+      "parameters": 76961152,
+      "parameters_millions": 76.961152,
+      "model_size_mb": 293.58349609375
+    },
+    "model_name": "t5_flan_small_finetuned",
+    "description": "T5-Flan-Small finetuned",
+    "base_model": "google/flan-t5-small"
+  }
+}

@@ -1,0 +1,2 @@
+Model,Base,Params (M),Size (MB),ROUGE-1,ROUGE-2,ROUGE-L,BLEU-4,Loss,Gen Time (s),Samples/sec
+T5-Flan-Small finetuned,google/flan-t5-small,76.96,293.58,0.3220,0.1252,0.2351,0.0789,1.9712,0.7330,1.36

@@ -1,5 +1,5 @@
 """
-Data loader per dataset di text generation
+Data loader for text generation datasets
 """
 import os
 import json
@@ -18,13 +18,13 @@ import numpy as np
 
 def download_and_prepare_dataset(dataset_name: str, cache_dir: str) -> str:
     """
-    Scarica e prepara il dataset
+    Download and prepare dataset
     
     Args:
-        dataset_name: Nome dataset (es. 'cnn_dailymail')
-        cache_dir: Directory cache
+        dataset_name: Dataset name (e.g. 'cnn_dailymail')
+        cache_dir: Cache directory
     Returns:
-        Path al dataset processato
+        Path to processed dataset
     """
     cache_path = Path(cache_dir) / dataset_name
     cache_path.mkdir(parents=True, exist_ok=True)
@@ -32,10 +32,10 @@ def download_and_prepare_dataset(dataset_name: str, cache_dir: str) -> str:
     
     # Check cache
     if dataset_path.exists() and (dataset_path / 'dataset_dict.json').exists():
-        logging.info(f"Dataset trovato in cache: {dataset_path}")
+        logging.info(f"Dataset found in cache: {dataset_path}")
         return str(dataset_path)
     
-    logging.info(f"Scaricando dataset {dataset_name}...")
+    logging.info(f"Downloading dataset {dataset_name}...")
     
     # Download
     if dataset_name == 'cnn_dailymail':
@@ -58,14 +58,14 @@ def download_and_prepare_dataset(dataset_name: str, cache_dir: str) -> str:
     with open(cache_path / 'dataset_stats.json', 'w') as f:
         json.dump(stats, f, indent=2)
     
-    logging.info(f"Dataset salvato: {dataset_path}")
+    logging.info(f"Dataset saved: {dataset_path}")
     logging.info(f"Statistics: {stats}")
     
     return str(dataset_path)
 
 
 class TextGenerationDataset(Dataset):
-    """Dataset per text generation (summarization, translation, etc.)"""
+    """Dataset for text generation (summarization, translation, etc.)"""
     
     def __init__(self,
                  data_path: str,
@@ -81,21 +81,21 @@ class TextGenerationDataset(Dataset):
         self.max_target_length = max_target_length or max_length
         self.prefix = prefix
         
-        # Carica dataset
-        logging.info(f"Caricando dataset: {data_path}, split: {split}")
+        # Load dataset
+        logging.info(f"Loading dataset: {data_path}, split: {split}")
         dataset = load_from_disk(data_path)
         self.data = dataset[split]
         
-        # Limita campioni se specificato
+        # Limit samples if specified
         if max_samples:
             self.data = self.data.select(range(min(max_samples, len(self.data))))
-            logging.info(f"Dataset limitato a {len(self.data)} campioni")
+            logging.info(f"Dataset limited to {len(self.data)} samples")
         
-        # Auto-detect colonne
+        # Auto-detect columns
         self._detect_columns()
         
     def _detect_columns(self):
-        """Rileva colonne input/target automaticamente"""
+        """Detect input/target columns automatically"""
         columns = self.data.column_names
         
         if 'article' in columns and 'highlights' in columns:
@@ -105,24 +105,24 @@ class TextGenerationDataset(Dataset):
             self.input_col = 'text'
             self.target_col = 'summary'
         else:
-            # Fallback: prime due colonne
+            # Fallback: first two columns
             self.input_col = columns[0]
             self.target_col = columns[1] if len(columns) > 1 else columns[0]
         
-        logging.info(f"Colonne: input='{self.input_col}', target='{self.target_col}'")
+        logging.info(f"Columns: input='{self.input_col}', target='{self.target_col}'")
     
     def __len__(self):
         return len(self.data)
     
     def __getitem__(self, idx):
-        """Ritorna esempio tokenizzato (come liste, non tensori)"""
+        """Return tokenized example (as lists, not tensors)"""
         example = self.data[idx]
         
-        # Prepara testi
+        # Prepare texts
         input_text = self.prefix + example[self.input_col]
         target_text = example[self.target_col]
         
-        # Tokenizza input
+        # Tokenize input
         inputs = self.tokenizer(
             input_text,
             max_length=self.max_length,
@@ -130,7 +130,7 @@ class TextGenerationDataset(Dataset):
             padding='max_length'
         )
         
-        # Tokenizza target
+        # Tokenize target
         targets = self.tokenizer(
             target_text,
             max_length=self.max_target_length,
@@ -138,7 +138,7 @@ class TextGenerationDataset(Dataset):
             padding='max_length'
         )
         
-        # Labels: sostituisci padding con -100
+        # Labels: replace padding with -100
         labels = [
             -100 if token == self.tokenizer.pad_token_id else token 
             for token in targets['input_ids']
@@ -152,7 +152,7 @@ class TextGenerationDataset(Dataset):
 
 
 class CustomTextDataset(Dataset):
-    """Dataset per file CSV/TSV custom"""
+    """Dataset for custom CSV/TSV files"""
     
     def __init__(self,
                  file_path: str,
@@ -163,15 +163,15 @@ class CustomTextDataset(Dataset):
         self.tokenizer = tokenizer
         self.max_length = max_length
         
-        # Carica dati
-        logging.info(f"Caricando file custom: {file_path}")
+        # Load data
+        logging.info(f"Loading custom file: {file_path}")
         self.data = pd.read_csv(file_path, delimiter=delimiter)
         
-        # Check colonne (assume 'source' e 'target')
+        # Check columns (assumes 'source' and 'target')
         if 'source' not in self.data.columns or 'target' not in self.data.columns:
             self.data.columns = ['source', 'target'] + list(self.data.columns[2:])
         
-        logging.info(f"Caricati {len(self.data)} esempi")
+        logging.info(f"Loaded {len(self.data)} examples")
     
     def __len__(self):
         return len(self.data)
@@ -179,7 +179,7 @@ class CustomTextDataset(Dataset):
     def __getitem__(self, idx):
         row = self.data.iloc[idx]
         
-        # Tokenizza
+        # Tokenize
         inputs = self.tokenizer(
             row['source'],
             max_length=self.max_length,
@@ -213,16 +213,16 @@ def create_data_splits(dataset,
                       test_ratio: float = 0.1,
                       seed: int = 42) -> Dict:
     """
-    Crea split train/val/test
+    Create train/val/test splits
     
     Args:
-        dataset: Dataset da splittare
-        train_ratio: % training
-        val_ratio: % validation
-        test_ratio: % test
+        dataset: Dataset to split
+        train_ratio: Training percentage
+        val_ratio: Validation percentage
+        test_ratio: Test percentage
         seed: Random seed
     Returns:
-        Dict con i tre split
+        Dict with the three splits
     """
     assert abs(train_ratio + val_ratio + test_ratio - 1.0) < 1e-6
     
@@ -230,7 +230,7 @@ def create_data_splits(dataset,
     train_size = int(total_size * train_ratio)
     val_size = int(total_size * val_ratio)
     
-    # Shuffle e split
+    # Shuffle and split
     dataset = dataset.shuffle(seed=seed)
     
     return {
@@ -242,16 +242,16 @@ def create_data_splits(dataset,
 
 def get_dataset_statistics(dataset) -> Dict:
     """
-    Calcola statistiche sul dataset
+    Calculate dataset statistics
     
     Args:
-        dataset: Dataset da analizzare
+        dataset: Dataset to analyze
     Returns:
-        Dict con statistiche (lunghezze, media, std, etc.)
+        Dict with statistics (lengths, mean, std, etc.)
     """
     lengths = []
     
-    for example in tqdm(dataset, desc="Calcolando statistiche"):
+    for example in tqdm(dataset, desc="Computing statistics"):
         if isinstance(example, dict):
             for value in example.values():
                 if isinstance(value, str):
@@ -276,16 +276,16 @@ def get_dataset_statistics(dataset) -> Dict:
         'median_length': float(np.median(lengths))
     }
 
-#fase di testing con altri dataset
+
 def inject_noise(text: str, noise_level: float = 0.1) -> str:
     """
-    Data augmentation: inietta rumore nel testo
+    Data augmentation
     
     Args:
-        text: Testo originale
-        noise_level: Livello di rumore (0-1)
+        text: Original text
+        noise_level: Noise level (0-1)
     Returns:
-        Testo con rumore
+        Text with noise
     """
     import random
     

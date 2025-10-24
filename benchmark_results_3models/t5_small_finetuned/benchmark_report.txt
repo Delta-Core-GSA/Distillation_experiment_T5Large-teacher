@@ -1,0 +1,7 @@
+================================================================================
+ KNOWLEDGE DISTILLATION BENCHMARK REPORT 
+================================================================================
+
+Timestamp: 2025-10-13T00:13:00.551180
+Model: /mnt/SSD2TB/T5Model/Distillation_experiment_T5Base-teacher-main/checkpoints/teacher/checkpoint_epoch_5.pt
+

@@ -19,7 +19,7 @@
   "distillation": {
     "teacher_model_path": "/home/delta-core/Scrivania/T5Distillation_new/checkpoints/teacher/checkpoint_epoch_5.pt",
     "teacher_model_name": "google-t5/t5-large", 
-    "distillation_type": "feature",
+    "distillation_type": "attention",
     "temperature": 5.0,
     "alpha": 0.5,
     "beta": 0.1, 

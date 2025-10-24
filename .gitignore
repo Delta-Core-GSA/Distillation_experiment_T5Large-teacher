@@ -3,6 +3,7 @@ data/
 logs/
 model_cache/
 cache/
+benchmarkfordelivarable.py
 
 
 *.pt

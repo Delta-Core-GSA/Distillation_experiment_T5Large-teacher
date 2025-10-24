@@ -1,5 +1,5 @@
 """
-Modulo per il benchmarking comparativo di Teacher e Student
+Module for comparative benchmarking of Teacher and Student
 """
 import json
 import time
@@ -9,19 +9,16 @@ import numpy as np
 from datetime import datetime
 import os
 import sys
-
 import torch
 from torch.utils.data import DataLoader
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM, DataCollatorForSeq2Seq
 from tqdm import tqdm
 import pandas as pd
-
 from data_loader import TextGenerationDataset, download_and_prepare_dataset
 from metrics import compute_generation_metrics, compute_bleu_scores
 
-
 class BenchmarkEvaluator:
-    """Classe per valutazione e benchmark comparativo"""
+    """Class for evaluation and comparative benchmark"""
         
     def __init__(self, teacher_path: str = None, student_path: str = None,
                 device: str = 'cuda',
@@ -30,12 +27,12 @@ class BenchmarkEvaluator:
                 base_model: str = 't5-base'):
         """
         Args:
-            teacher_path: Path al modello teacher (.pt locale o HF repo)
-            student_path: Path al modello student (.pt locale o HF repo)
-            device: Device da utilizzare
-            output_dir: Directory per salvare i risultati
-            num_workers: Numero di worker per DataLoader
-            base_model: Modello base per caricare checkpoint .pt
+            teacher_path: Path to teacher model (local .pt or HF repo)
+            student_path: Path to student model (local .pt or HF repo)
+            device: Device to use
+            output_dir: Directory to save results
+            num_workers: Number of workers for DataLoader
+            base_model: Base model to load .pt checkpoint
         """
         self.teacher_path = teacher_path
         self.student_path = student_path
@@ -44,35 +41,36 @@ class BenchmarkEvaluator:
         self.num_workers = num_workers
         self.base_model = base_model
         
-        # Crea directory output
+        # Create output directory
         self.output_dir.mkdir(parents=True, exist_ok=True)
         
-        # Inizializza variabili
+        # Initialize variables
         self.teacher_model = None
         self.student_model = None
         self.teacher_params = 0
         self.student_params = 0
         self.tokenizer = None
         
-        # Carica modelli disponibili
+        # Load available models
         self._load_models()
         
-        print("BenchmarkEvaluator inizializzato", flush=True)
-
+        print("BenchmarkEvaluator initialized", flush=True)
+    
     def _is_local_checkpoint(self, path: str) -> bool:
-        """Verifica se il path è un checkpoint locale .pt"""
+        """Check if path is a local .pt checkpoint"""
         return path is not None and (path.endswith('.pt') or path.endswith('.pth')) and os.path.exists(path)
     
     def _detect_model_size_from_checkpoint(self, checkpoint_path: str) -> str:
-        """Rileva automaticamente la dimensione del modello dal checkpoint"""
-        print("Rilevando dimensioni modello dal checkpoint...", flush=True)
+        """Auto-detect model size from checkpoint"""
+        print("Detecting model size from checkpoint...", flush=True)
         
         checkpoint = torch.load(
             checkpoint_path, 
             map_location=self.device,
             weights_only=False
         )
-        # Estrai state_dict
+        
+        # Extract state_dict
         if 'model_state_dict' in checkpoint:
             state_dict = checkpoint['model_state_dict']
         elif 'state_dict' in checkpoint:
@@ -80,16 +78,16 @@ class BenchmarkEvaluator:
         else:
             state_dict = checkpoint
         
-        # Rileva hidden_size
+        # Detect hidden_size
         if 'shared.weight' in state_dict:
             hidden_size = state_dict['shared.weight'].shape[1]
         elif 'encoder.embed_tokens.weight' in state_dict:
             hidden_size = state_dict['encoder.embed_tokens.weight'].shape[1]
         else:
-            print("Non riesco a rilevare dimensioni, uso t5-base", flush=True)
+            print("Cannot detect size, using t5-base", flush=True)
             return 't5-base'
         
-        # Mappa dimensioni → modelli
+        # Map sizes to models
         size_mapping = {
             512: 't5-small',
             768: 't5-base',
@@ -98,26 +96,26 @@ class BenchmarkEvaluator:
         }
         
         detected_model = size_mapping.get(hidden_size, 't5-base')
-        print(f"Modello rilevato: {detected_model} (hidden_size: {hidden_size})", flush=True)
+        print(f"Detected model: {detected_model} (hidden_size: {hidden_size})", flush=True)
         return detected_model
-
+    
     def _load_model_from_checkpoint(self, checkpoint_path: str, model_name: str):
-        """Carica modello da checkpoint locale .pt"""
-        print(f"Caricando {model_name} da checkpoint: {checkpoint_path}", flush=True)
+        """Load model from local .pt checkpoint"""
+        print(f"Loading {model_name} from checkpoint: {checkpoint_path}", flush=True)
         
-        # Auto-detect size se base_model è default
+        # Auto-detect size if base_model is default
         if self.base_model == 't5-base':
             base_model_to_use = self._detect_model_size_from_checkpoint(checkpoint_path)
         else:
             base_model_to_use = self.base_model
             
-        print(f"Usando modello base: {base_model_to_use}", flush=True)
+        print(f"Using base model: {base_model_to_use}", flush=True)
         
         model = AutoModelForSeq2SeqLM.from_pretrained(base_model_to_use)
         model = model.to(self.device)
-        print(f"Modello spostato su: {self.device}", flush=True)
+        print(f"Model moved to: {self.device}", flush=True)
         
-        print(f"Caricando checkpoint sul device: {self.device}", flush=True)
+        print(f"Loading checkpoint on device: {self.device}", flush=True)
         checkpoint = torch.load(
             checkpoint_path, 
             map_location=self.device,
@@ -134,23 +132,23 @@ class BenchmarkEvaluator:
         # Load state dict
         try:
             model.load_state_dict(state_dict, strict=True)
-            print(f"{model_name} caricato con successo", flush=True)
+            print(f"{model_name} loaded successfully", flush=True)
         except Exception as e:
-            print(f"Errore strict loading: {e}", flush=True)
-            print("Tentativo non-strict...", flush=True)
+            print(f"Strict loading error: {e}", flush=True)
+            print("Attempting non-strict loading...", flush=True)
             model.load_state_dict(state_dict, strict=False)
-
+        
         if self.device == 'cuda' and next(model.parameters()).is_cuda:
-            print(f"✓ {model_name} confermato su GPU", flush=True)
+            print(f"Confirmed {model_name} on GPU", flush=True)
         elif self.device == 'cuda':
-            print(f"⚠ {model_name} NON è su GPU! Tentativo di spostamento...", flush=True)
+            print(f"Warning: {model_name} NOT on GPU! Attempting move...", flush=True)
             model = model.to(self.device)
         
         return model
     
     def _load_model_from_hf(self, model_path: str, model_name: str):
-        """Carica modello da Hugging Face"""
-        print(f"Caricando {model_name} da HF: {model_path}", flush=True)
+        """Load model from Hugging Face"""
+        print(f"Loading {model_name} from HF: {model_path}", flush=True)
         
         model = AutoModelForSeq2SeqLM.from_pretrained(
             model_path,
@@ -160,17 +158,17 @@ class BenchmarkEvaluator:
         return model
     
     def _load_models(self):
-        """Carica i modelli teacher e/o student disponibili"""
-        print("Caricando modelli per benchmark...", flush=True)
+        """Load available teacher and/or student models"""
+        print("Loading models for benchmark...", flush=True)
         
         if self.device == 'cuda':
             if torch.cuda.is_available():
-                print(f"✓ CUDA disponibile - GPU: {torch.cuda.get_device_name(0)}", flush=True)
-                print(f"  Memoria GPU disponibile: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB", flush=True)
+                print(f"CUDA available - GPU: {torch.cuda.get_device_name(0)}", flush=True)
+                print(f"  GPU memory available: {torch.cuda.get_device_properties(0).total_memory / 1024**3:.2f} GB", flush=True)
             else:
-                print("✗ CUDA NON disponibile! Il benchmark girerà su CPU", flush=True)
+                print("CUDA NOT available! Benchmark will run on CPU", flush=True)
                 self.device = 'cpu'
-
+        
         # Load teacher
         if self.teacher_path:
             if self._is_local_checkpoint(self.teacher_path):
@@ -208,17 +206,17 @@ class BenchmarkEvaluator:
             print(f"Compression ratio: {self.teacher_params/self.student_params:.2f}x", flush=True)
         
         if not self.tokenizer:
-            raise ValueError("Nessun modello caricato. Fornire almeno un path valido.")
+            raise ValueError("No model loaded. Provide at least one valid path.")
         
-        # Set pad_token se mancante
+        # Set pad_token if missing
         if self.tokenizer.pad_token is None:
             self.tokenizer.pad_token = self.tokenizer.eos_token
-            print("Impostato pad_token = eos_token", flush=True)
+            print("Set pad_token = eos_token", flush=True)
     
     def prepare_test_data(self, dataset_name: str = 'cnn_dailymail',
                          max_samples: Optional[int] = 1000):
-        """Prepara il dataset di test"""
-        print("Preparando dataset di test...", flush=True)
+        """Prepare test dataset"""
+        print("Preparing test dataset...", flush=True)
         
         data_path = download_and_prepare_dataset(dataset_name, './data')
         
@@ -245,20 +243,20 @@ class BenchmarkEvaluator:
             pin_memory=True
         )
         
-        print(f"Test dataset preparato: {len(test_dataset)} samples", flush=True)
+        print(f"Test dataset prepared: {len(test_dataset)} samples", flush=True)
         return len(test_dataset)
     
     def evaluate_model(self, model, model_name: str) -> Dict:
         """
-        Valuta un singolo modello
+        Evaluate a single model
         
         Args:
-            model: Modello da valutare
-            model_name: Nome del modello
+            model: Model to evaluate
+            model_name: Model name
         Returns:
-            Dict con metriche
+            Dict with metrics
         """
-        print(f"Valutando {model_name}...", flush=True)
+        print(f"Evaluating {model_name}...", flush=True)
         
         model.eval()
         
@@ -278,7 +276,7 @@ class BenchmarkEvaluator:
                 outputs = model(**batch)
                 total_loss += outputs.loss.item()
                 
-                # Generate predictions con timing
+                # Generate predictions with timing
                 start_time = time.time()
                 generated = model.generate(
                     batch['input_ids'],
@@ -306,19 +304,19 @@ class BenchmarkEvaluator:
                         'gen_time': np.mean(generation_times[-10:]) if generation_times else 0
                     })
         
-        # Calcola metriche
+        # Calculate metrics
         avg_loss = total_loss / len(self.test_loader)
         avg_generation_time = np.mean(generation_times)
         
-        print(f"Calcolando metriche per {model_name}...", flush=True)
+        print(f"Computing metrics for {model_name}...", flush=True)
         
-        # ROUGE e altre metriche base
+        # ROUGE and other base metrics
         metrics = compute_generation_metrics(all_predictions, all_references)
         
-        # BLEU scores aggiuntivi
+        # Additional BLEU scores
         bleu_scores = compute_bleu_scores(all_predictions, all_references)
         
-        # Compila risultati
+        # Compile results
         results = {
             'loss': avg_loss,
             'generation_time_per_sample': avg_generation_time,
@@ -345,12 +343,12 @@ class BenchmarkEvaluator:
         
         results['sample_predictions'] = sample_predictions
         
-        print(f"{model_name} evaluation completato", flush=True)
+        print(f"{model_name} evaluation completed", flush=True)
         return results
     
     def compare_inference_speed(self, num_samples: int = 100) -> Dict:
-        """Confronta velocità di inferenza"""
-        print("Confrontando velocità di inferenza...", flush=True)
+        """Compare inference speed"""
+        print("Comparing inference speed...", flush=True)
         
         test_inputs = []
         for i, batch in enumerate(self.test_loader):
@@ -409,8 +407,8 @@ class BenchmarkEvaluator:
         }
     
     def calculate_memory_footprint(self) -> Dict:
-        """Calcola impronta di memoria modelli"""
-        print("Calcolando impronta memoria...", flush=True)
+        """Calculate model memory footprint"""
+        print("Calculating memory footprint...", flush=True)
         
         def get_model_size(model):
             param_size = sum(p.numel() * p.element_size() for p in model.parameters())
@@ -434,7 +432,7 @@ class BenchmarkEvaluator:
     
     def analyze_performance_tradeoffs(self, teacher_results: Dict, 
                                      student_results: Dict) -> Dict:
-        """Analizza tradeoff performance/efficienza"""
+        """Analyze performance/efficiency tradeoffs"""
         
         # Performance degradation
         rouge_degradation = {
@@ -470,9 +468,9 @@ class BenchmarkEvaluator:
         }
     
     def run_full_evaluation(self) -> Dict:
-        """Esegue valutazione completa entrambi i modelli"""
+        """Run full evaluation of both models"""
         print("=" * 50, flush=True)
-        print("INIZIANDO BENCHMARK COMPLETO", flush=True)
+        print("STARTING FULL BENCHMARK", flush=True)
         print("=" * 50, flush=True)
         
         self.prepare_test_data()
@@ -516,28 +514,28 @@ class BenchmarkEvaluator:
     
     def run_single_model_evaluation(self, model_type: str = 'teacher') -> Dict:
         """
-        Esegue valutazione singolo modello
+        Run single model evaluation
         
         Args:
-            model_type: 'teacher' o 'student'
+            model_type: 'teacher' or 'student'
         Returns:
-            Dict con risultati
+            Dict with results
         """
         print("=" * 50, flush=True)
-        print(f"VALUTAZIONE SINGOLO MODELLO: {model_type.upper()}", flush=True)
+        print(f"SINGLE MODEL EVALUATION: {model_type.upper()}", flush=True)
         print("=" * 50, flush=True)
         
         self.prepare_test_data()
         
         if model_type == 'teacher':
             if not self.teacher_model:
-                raise ValueError("Teacher model non caricato")
+                raise ValueError("Teacher model not loaded")
             model = self.teacher_model
             model_path = self.teacher_path
             params = self.teacher_params
         else:
             if not self.student_model:
-                raise ValueError("Student model non caricato")
+                raise ValueError("Student model not loaded")
             model = self.student_model
             model_path = self.student_path
             params = self.student_params
@@ -545,7 +543,7 @@ class BenchmarkEvaluator:
         print(f"\n--- Evaluating {model_type.capitalize()} Model ---", flush=True)
         model_results = self.evaluate_model(model, model_type.capitalize())
         
-        # Test velocità inferenza
+        # Test inference speed
         print("\n--- Testing Inference Speed ---", flush=True)
         test_inputs = []
         for i, batch in enumerate(self.test_loader):
@@ -566,7 +564,7 @@ class BenchmarkEvaluator:
         
         avg_speed = np.mean(speeds) if speeds else 0
         
-        # Memoria
+        # Memory
         param_size = params * 4 / 1024 / 1024
         
         results = {
@@ -591,7 +589,7 @@ class BenchmarkEvaluator:
         return results
     
     def generate_comparison_table(self, results: Dict) -> pd.DataFrame:
-        """Genera tabella di confronto"""
+        """Generate comparison table"""
         
         comparison_data = {
             'Metric': [],
@@ -635,7 +633,7 @@ class BenchmarkEvaluator:
         return pd.DataFrame(comparison_data)
     
     def save_report(self, results: Dict) -> str:
-        """Salva report completo"""
+        """Save complete report"""
         
         # JSON results
         json_path = self.output_dir / 'benchmark_results.json'
@@ -687,16 +685,16 @@ class BenchmarkEvaluator:
                 f.write(f"Performance Retention: {tradeoffs['performance_retention_percent']:.2f}%\n")
                 f.write(f"Overall Efficiency Score: {tradeoffs['overall_efficiency_score']:.2f}\n\n")
         
-        print(f"Report salvato in: {report_path}", flush=True)
+        print(f"Report saved at: {report_path}", flush=True)
         return str(report_path)
-
+    
     def print_summary(self, results: Dict):
-        """Stampa sommario risultati"""
+        """Print results summary"""
         
         print("\n" + "=" * 80, flush=True)
         
         if 'model_type' in results:
-            # Valutazione singola
+            # Single evaluation
             print(f" BENCHMARK SUMMARY - {results['model_type'].upper()} MODEL ", flush=True)
             print("=" * 80, flush=True)
             
@@ -714,7 +712,7 @@ class BenchmarkEvaluator:
             print(f"  Speed: {perf['samples_per_second']:.2f} samples/sec", flush=True)
             
         else:
-            # Valutazione comparativa
+            # Comparative evaluation
             print(" BENCHMARK SUMMARY - COMPARATIVE ", flush=True)
             print("=" * 80, flush=True)
             

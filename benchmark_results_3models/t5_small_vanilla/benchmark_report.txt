@@ -1,0 +1,7 @@
+================================================================================
+ KNOWLEDGE DISTILLATION BENCHMARK REPORT 
+================================================================================
+
+Timestamp: 2025-10-12T22:31:42.714544
+Model: /home/delta-core/Scrivania/T5Distillation_new/checkpoints/student/t5_small_vanillakd.pt
+
