@@ -136,10 +136,6 @@ new_code/
 - **Vanilla KD**: Matches output logit distributions using KL divergence
 - **Feature KD**: Aligns intermediate hidden representations between models
 - **Attention KD**: Transfers attention patterns from teacher to student
-
-## Performance Metrics
-
-
 ## Evaluation metrics:
 - ROUGE-1, ROUGE-2, ROUGE-L
 - BLEU-1, BLEU-2, BLEU-3, BLEU-4
