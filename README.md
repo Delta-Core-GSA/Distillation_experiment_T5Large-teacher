@@ -6,8 +6,8 @@ A knowledge distillation framework for compressing T5 models on the CNN/DailyMai
 ## Installation
 ```bash
 # Clone repository
-git clone <https://github.com/Delta-Core-GSA/Distillation_experiment_T5Large-teacher>
-cd <Distillation_experiment_T5Large-teacher>
+git clone https://github.com/Delta-Core-GSA/Distillation_experiment_T5Large-teacher
+cd Distillation_experiment_T5Large-teacher
 
 # Create virtual environment
 python -m venv venv
